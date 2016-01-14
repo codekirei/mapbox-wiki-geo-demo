@@ -15,22 +15,25 @@ const wikiApi = ob => Object.keys(ob)
   .reverse().concat(base)
   .reverse().join('')
 
-const getPageInfo = id => get(wikiApi(
+const wiki = ob => get(wikiApi(ob))
+
+const getPageInfo = id => wiki(
   { pageids: id
-  , prop: 'extracts|coordinates'
+  , prop: 'extracts|coordinates|info'
   , exintro: true
   , explaintext: true
-  }))
+  , inprop: 'url'
+  })
   .then(res => JSON.parse(res.body).query.pages[id])
 
-const getLatestId = () => get(wikiApi(
+const getLatestId = () => wiki(
   { list: 'categorymembers'
   , cmtitle: 'Category:Coordinates_on_Wikidata'
   , cmprop: 'ids'
   , cmsort: 'timestamp'
   , cmdir: 'descending'
   , cmlimit: 1
-  }))
+  })
   .then(res => JSON.parse(res.body).query.categorymembers[0].pageid)
 
 getLatestId()

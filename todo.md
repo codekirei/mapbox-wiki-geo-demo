@@ -1,0 +1,4 @@
+- get mapbox api token
+- set up node process to run on server and update all connected clients when there are changes
+  - should only ping when there are clients connected
+- frontend client with mapbox core
