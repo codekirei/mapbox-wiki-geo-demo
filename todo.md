@@ -1,5 +1,9 @@
+- maybe add source maps to scripts
+- implement watchify
+- implement browser-sync
 - get mapbox api token
+- get mapbox working inside mithril
 - set up node process to run on server and update all connected clients when there are changes
   - should only ping when there are clients connected
-- frontend client with mapbox core
 - write deploy script
+- deploy to heroku
