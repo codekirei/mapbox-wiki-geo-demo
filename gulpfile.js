@@ -36,25 +36,25 @@ const locs =
 //----------------------------------------------------------
 // fns
 //----------------------------------------------------------
-const transforms =
-  [ babelify.configure({presets: ['es2015']}) ]
+const babelOpts = [babelify.configure({presets: ['es2015']})]
 
-const bundle = (name, transform, watch) =>
-  globby([locs.src.scripts[name]])
-    .then(entries => {
-      const bundler = watch ? watchify : browserify
-      return bundler({entries, transform})
-        .bundle()
-        .pipe(source(`${name}.js`))
-        .pipe(buffer())
-        .pipe(uglify())
-        .pipe(gulp.dest(locs.dist))
+const bundler = (name, transform, plugin) => entries =>
+  browserify(
+    { entries
+    , transform
+    , plugin
+    , cache: {}
+    , packageCache: {}
     })
+    .bundle()
+    .pipe(source(`${name}.js`))
+    .pipe(buffer())
+    .pipe(uglify())
+    .pipe(gulp.dest(locs.dist))
 
-const scripts = () => Promise.all(
-  [ bundle('bundle', transforms)
-  , bundle('vendor')
-  ])
+const scripts = (name, transform, plugin) =>
+  globby([locs.src.scripts[name]])
+    .then(bundler(name, transform, plugin))
 
 const startServer = () =>
   child.spawn('node', [locs.server], {stdio: 'inherit'})
@@ -69,8 +69,14 @@ const restartServer = proc => {
 
 const watch = () => {
   let server = startServer()
-  gulp.watch(locs.src.entries, ['scripts'])
   gulp.watch(locs.server, () => restartServer(server))
+
+  function bundle() {
+    scripts('bundle', babelOpts, [watchify])
+    util.log('scripts bundled')
+  }
+  bundle()
+  gulp.watch(locs.src.scripts.bundle, bundle)
 }
 
 const clean = () => del([locs.dist])
@@ -80,9 +86,10 @@ const html = () => gulp.src('src/index.html').pipe(gulp.dest(locs.dist))
 //----------------------------------------------------------
 // gulp tasks
 //----------------------------------------------------------
-gulp.task('scripts', scripts)
+gulp.task('scripts', () => scripts('bundle', babelOpts))
+gulp.task('scripts:vendor', () => scripts('vendor'))
 gulp.task('html', html)
 gulp.task('watch', watch)
 gulp.task('clean', clean)
 gulp.task('node', startServer)
-gulp.task('build', ['scripts', 'html'])
+gulp.task('build', ['scripts', 'scripts:vendor', 'html'])

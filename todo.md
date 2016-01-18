@@ -1,5 +1,4 @@
 - maybe add source maps to scripts
-- implement watchify
 - implement browser-sync
 - get mapbox api token
 - get mapbox working inside mithril
