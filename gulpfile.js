@@ -74,19 +74,17 @@ const styles = () =>
 const startServer = () =>
   child.spawn('node', [locs.server], {stdio: 'inherit'})
 
-const restartServer = proc => {
-  if (proc && proc.exitCode === null) {
-    proc.kill()
-    console.log('server restarted')
-  }
-  startServer(proc)
-  // browserSync.reload() // test me
-}
-
 const watch = () => {
   // server
   let server = startServer()
-  gulp.watch(locs.server, () => restartServer(server))
+  gulp.watch(locs.server, () => {
+    server.kill()
+    server.on('close', () => {
+      util.log('restarting express')
+      server = startServer()
+      browserSync.reload() // fires too early
+    })
+  })
 
   // scripts
   gulp.watch(locs.src.scripts.modules, ['imports'])
