@@ -8,7 +8,9 @@ const p = require('path')
 const child = require('child_process')
 
 // npm
+const autoImport = require('auto-import')
 const runseq = require('run-sequence')
+const sourcemaps = require('gulp-sourcemaps')
 const browserify = require('browserify')
 const gulp = require('gulp')
 const util = require('gulp-util')
@@ -27,49 +29,55 @@ const Promise = require('bluebird')
 const locs =
   { src:
     { scripts:
-      { vendor: 'src/scripts/vendor/**/*.js'
-      , bundle: 'src/scripts/bundle/**/*.js'
+      { entries: 'src/scripts/app.js'
+      , modules: 'src/scripts/*/**/*.js'
+      , root: 'src/scripts'
       }
     , html: 'src/markup/index.html'
     }
-  , dist: 'server/public'
+  , dest:
+    { root: 'server/public'
+    , scripts: 'server/public/scripts'
+    , styles: 'server/public/styles'
+    }
   , server: 'server/index.js'
   }
 
 //----------------------------------------------------------
 // fns
 //----------------------------------------------------------
-const babelOpts = [babelify.configure({presets: ['es2015']})]
+const bundleStream = browserify(
+  { entries: locs.src.scripts.entries
+  , transform: [ babelify.configure({ presets: ['es2015'] }) ]
+  , cache: {}
+  , packageCache: {}
+  , debug: true
+  })
 
-const bundler = (name, transform, plugin) => entries =>
-  browserify(
-    { entries
-    , transform
-    , plugin
-    , cache: {}
-    , packageCache: {}
-    })
+bundleStream.on('log', txt => util.log(`Browserify: ${txt}`))
+
+const consume = stream =>
+  stream
     .bundle()
-    .pipe(source(`${name}.js`))
+    .on('error', err => console.log(err.stack))
+    .pipe(source('app.js'))
     .pipe(buffer())
-    .pipe(uglify())
-    .pipe(gulp.dest(locs.dist))
-
-const scripts = (name, transform, plugin) =>
-  globby([locs.src.scripts[name]])
-    .then(bundler(name, transform, plugin))
+    .pipe(sourcemaps.init({loadMaps: true}))
+      .pipe(uglify())
+    .pipe(sourcemaps.write('./'))
+    .pipe(gulp.dest(locs.dest.scripts))
 
 const styles = () =>
   gulp.src('node_modules/mapbox.js/theme/**/*')
-    .pipe(gulp.dest(p.join(locs.dist, 'styles')))
+    .pipe(gulp.dest(locs.dest.styles))
 
 const startServer = () =>
   child.spawn('node', [locs.server], {stdio: 'inherit'})
 
 const restartServer = proc => {
   if (proc && proc.exitCode === null) {
-    console.log('restarting server')
     proc.kill()
+    console.log('server restarted')
   }
   startServer(proc)
 }
@@ -80,38 +88,32 @@ const watch = () => {
   gulp.watch(locs.server, () => restartServer(server))
 
   // scripts
-  gulp.watch(locs.src.scripts.bundle, () => {
-    scripts('bundle', babelOpts, [watchify])
-    util.log('scripts bundled')
-  })
-  // function bundle() {
-  //   scripts('bundle', babelOpts, [watchify])
-  //   util.log('scripts bundled')
-  // }
-  // bundle()
-  // gulp.watch(locs.src.scripts.bundle, bundle)
+  gulp.watch(locs.src.scripts.modules, ['imports'])
+  const stream = watchify(bundleStream)
+  consume(stream)
+  stream.on('update', () => consume(stream))
 
   // html
   gulp.watch(locs.src.html, ['html'])
 }
 
-const clean = () => del([locs.dist])
+const clean = () => del([locs.dest.root])
 
-const html = () => gulp.src(locs.src.html).pipe(gulp.dest(locs.dist))
+const html = () => gulp.src(locs.src.html).pipe(gulp.dest(locs.dest.root))
 
 //----------------------------------------------------------
 // gulp tasks
 //----------------------------------------------------------
 gulp.task('styles', styles)
-gulp.task('scripts', () => scripts('bundle', babelOpts))
-gulp.task('scripts:vendor', () => scripts('vendor'))
+gulp.task('scripts', ['imports'], () => consume(bundleStream))
+gulp.task('imports', () => autoImport(locs.src.scripts.root))
 gulp.task('html', html)
-gulp.task('watch', ['build'], watch)
+gulp.task('watch', ['styles', 'html'], cb => watch())
 gulp.task('clean', clean)
 gulp.task('node', startServer)
 gulp.task('build', cb =>
   runseq(
-    ['styles', 'scripts', 'scripts:vendor', 'html']
+    ['styles', 'scripts', 'html']
     , cb
   ))
 gulp.task('serve', startServer)
