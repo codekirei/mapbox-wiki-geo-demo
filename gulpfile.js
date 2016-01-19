@@ -4,7 +4,6 @@
 // modules
 //----------------------------------------------------------
 // node
-const p = require('path')
 const child = require('child_process')
 
 // npm
@@ -15,13 +14,12 @@ const browserify = require('browserify')
 const gulp = require('gulp')
 const util = require('gulp-util')
 const del = require('del')
-const globby = require('globby')
 const source = require('vinyl-source-stream')
 const buffer = require('vinyl-buffer')
 const uglify = require('gulp-uglify')
 const babelify = require('babelify')
 const watchify = require('watchify')
-const Promise = require('bluebird')
+const browserSync = require('browser-sync').create('devServer')
 
 //----------------------------------------------------------
 // cfgs
@@ -37,6 +35,7 @@ const locs =
     }
   , dest:
     { root: 'server/public'
+    , all: 'server/public/**/*'
     , scripts: 'server/public/scripts'
     , styles: 'server/public/styles'
     }
@@ -66,6 +65,7 @@ const consume = stream =>
       .pipe(uglify())
     .pipe(sourcemaps.write('./'))
     .pipe(gulp.dest(locs.dest.scripts))
+    .pipe(browserSync.stream())
 
 const styles = () =>
   gulp.src('node_modules/mapbox.js/theme/**/*')
@@ -80,6 +80,7 @@ const restartServer = proc => {
     console.log('server restarted')
   }
   startServer(proc)
+  // browserSync.reload() // test me
 }
 
 const watch = () => {
@@ -95,11 +96,26 @@ const watch = () => {
 
   // html
   gulp.watch(locs.src.html, ['html'])
+
+  // browser-sync
+  // browserSync.watch(locs.dest.all).on('change', browserSync.reload)
+  browserSync.init(
+    { proxy:
+      { target: 'localhost:3000'
+      , ws: true
+      }
+    , open: false
+    , port: 1337
+    }
+  )
 }
 
 const clean = () => del([locs.dest.root])
 
-const html = () => gulp.src(locs.src.html).pipe(gulp.dest(locs.dest.root))
+const html = () =>
+  gulp.src(locs.src.html)
+    .pipe(gulp.dest(locs.dest.root))
+    .pipe(browserSync.stream())
 
 //----------------------------------------------------------
 // gulp tasks
