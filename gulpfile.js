@@ -7,6 +7,7 @@
 const child = require('child_process')
 
 // npm
+const runseq = require('run-sequence')
 const browserify = require('browserify')
 const gulp = require('gulp')
 const util = require('gulp-util')
@@ -28,6 +29,7 @@ const locs =
       { vendor: 'src/scripts/vendor/**/*.js'
       , bundle: 'src/scripts/bundle/**/*.js'
       }
+    , html: 'src/markup/index.html'
     }
   , dist: 'server/dist'
   , server: 'server/index.js'
@@ -68,20 +70,29 @@ const restartServer = proc => {
 }
 
 const watch = () => {
+  // server
   let server = startServer()
   gulp.watch(locs.server, () => restartServer(server))
 
-  function bundle() {
+  // scripts
+  gulp.watch(locs.src.scripts.bundle, () => {
     scripts('bundle', babelOpts, [watchify])
     util.log('scripts bundled')
-  }
-  bundle()
-  gulp.watch(locs.src.scripts.bundle, bundle)
+  })
+  // function bundle() {
+  //   scripts('bundle', babelOpts, [watchify])
+  //   util.log('scripts bundled')
+  // }
+  // bundle()
+  // gulp.watch(locs.src.scripts.bundle, bundle)
+
+  // html
+  gulp.watch(locs.src.html, ['html'])
 }
 
 const clean = () => del([locs.dist])
 
-const html = () => gulp.src('src/index.html').pipe(gulp.dest(locs.dist))
+const html = () => gulp.src(locs.src.html).pipe(gulp.dest(locs.dist))
 
 //----------------------------------------------------------
 // gulp tasks
@@ -89,7 +100,12 @@ const html = () => gulp.src('src/index.html').pipe(gulp.dest(locs.dist))
 gulp.task('scripts', () => scripts('bundle', babelOpts))
 gulp.task('scripts:vendor', () => scripts('vendor'))
 gulp.task('html', html)
-gulp.task('watch', watch)
+gulp.task('watch', ['build'], watch)
 gulp.task('clean', clean)
 gulp.task('node', startServer)
-gulp.task('build', ['scripts', 'scripts:vendor', 'html'])
+gulp.task('build', cb =>
+  runseq(
+    ['scripts', 'scripts:vendor', 'html']
+    , cb
+  ))
+gulp.task('serve', startServer)

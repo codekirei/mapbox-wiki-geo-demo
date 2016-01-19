@@ -3,8 +3,12 @@
 //----------------------------------------------------------
 // modules
 //----------------------------------------------------------
+// node
+const p = require('path')
+
 // npm
 const get = require('got')
+const express = require('express')
 
 //----------------------------------------------------------
 // logic
@@ -38,5 +42,14 @@ const getLatestId = () => wiki(
 
 getLatestId()
   .then(getPageInfo)
-  .then(console.log)
+  // .then(console.log)
   .catch(err => console.log(err))
+
+// express
+//----------------------------------------------------------
+const app = express()
+// app.use(express.static(p.join(__dirname, 'dist')))
+app.use('/', express.static(p.join(__dirname, 'dist')))
+app.listen(3000, () => {
+  console.log('express listening on localhost:3000')
+})
