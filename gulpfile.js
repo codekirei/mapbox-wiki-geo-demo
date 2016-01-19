@@ -32,7 +32,7 @@ const locs =
       }
     , html: 'src/markup/index.html'
     }
-  , dist: 'server/dist'
+  , dist: 'server/public'
   , server: 'server/index.js'
   }
 

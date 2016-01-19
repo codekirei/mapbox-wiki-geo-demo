@@ -48,8 +48,7 @@ getLatestId()
 // express
 //----------------------------------------------------------
 const app = express()
-// app.use(express.static(p.join(__dirname, 'dist')))
-app.use('/', express.static(p.join(__dirname, 'dist')))
+app.use('/', express.static(p.join(__dirname, 'public')))
 app.listen(3000, () => {
   console.log('express listening on localhost:3000')
 })
