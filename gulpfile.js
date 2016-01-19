@@ -4,6 +4,7 @@
 // modules
 //----------------------------------------------------------
 // node
+const p = require('path')
 const child = require('child_process')
 
 // npm
@@ -58,6 +59,10 @@ const scripts = (name, transform, plugin) =>
   globby([locs.src.scripts[name]])
     .then(bundler(name, transform, plugin))
 
+const styles = () =>
+  gulp.src('node_modules/mapbox.js/theme/**/*')
+    .pipe(gulp.dest(p.join(locs.dist, 'styles')))
+
 const startServer = () =>
   child.spawn('node', [locs.server], {stdio: 'inherit'})
 
@@ -97,6 +102,7 @@ const html = () => gulp.src(locs.src.html).pipe(gulp.dest(locs.dist))
 //----------------------------------------------------------
 // gulp tasks
 //----------------------------------------------------------
+gulp.task('styles', styles)
 gulp.task('scripts', () => scripts('bundle', babelOpts))
 gulp.task('scripts:vendor', () => scripts('vendor'))
 gulp.task('html', html)
@@ -105,7 +111,7 @@ gulp.task('clean', clean)
 gulp.task('node', startServer)
 gulp.task('build', cb =>
   runseq(
-    ['scripts', 'scripts:vendor', 'html']
+    ['styles', 'scripts', 'scripts:vendor', 'html']
     , cb
   ))
 gulp.task('serve', startServer)

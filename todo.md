@@ -1,6 +1,7 @@
 - implement serve-static in express
 - get mapbox working inside mithril
 - implement browser-sync
+- clean up and consolidate styles
 
 - get mapbox api token
 - maybe add source maps to scripts
