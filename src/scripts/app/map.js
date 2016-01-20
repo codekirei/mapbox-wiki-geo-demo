@@ -20,13 +20,13 @@ const popup = L.popup(
 marker.bindPopup(popup).openPopup()
 
 // artificial loop
-const t = 3000
+const t = 5000
 const len = coordinates.length
 let i = 0
 const loop = () => setTimeout(() => {
-  i = (i +1) % len
+  i = (i + 1) % len
   marker.setLatLng(coordinates[i])
-  map.setView(coordinates[i], zoom)
+  map.panTo(coordinates[i])
   loop()
 }, t)
 // loop()
