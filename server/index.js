@@ -5,10 +5,12 @@
 //----------------------------------------------------------
 // node
 const p = require('path')
+const http = require('http')
 
 // npm
 const get = require('got')
 const express = require('express')
+const socketio = require('socket.io')
 
 //----------------------------------------------------------
 // logic
@@ -48,7 +50,16 @@ const getLatestId = () => wiki(
 // express
 //----------------------------------------------------------
 const app = express()
+const server = http.createServer(app)
+const io = socketio(server)
+
 app.use('/', express.static(p.join(__dirname, 'public')))
-app.listen(3000, () =>
-  console.log('express listening on localhost:3000')
+
+io.on('connection', sock => {
+  console.log('a client connected')
+  sock.on('disconnect', () => console.log('a client disconnected'))
+})
+
+server.listen(3000, () =>
+  console.log('server listening on localhost:3000')
 )
