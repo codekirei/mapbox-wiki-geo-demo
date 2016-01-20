@@ -20,6 +20,7 @@ const uglify = require('gulp-uglify')
 const babelify = require('babelify')
 const watchify = require('watchify')
 const browserSync = require('browser-sync').create('devServer')
+const nodemon = require('nodemon')
 
 //----------------------------------------------------------
 // cfgs
@@ -58,7 +59,7 @@ bundleStream.on('log', txt => util.log(`Browserify: ${txt}`))
 const consume = stream =>
   stream
     .bundle()
-    .on('error', err => console.log(err.stack))
+    .on('error', err => console.log(err.stack)) // TODO is this working?
     .pipe(source('app.js'))
     .pipe(buffer())
     .pipe(sourcemaps.init({loadMaps: true}))
@@ -71,20 +72,17 @@ const styles = () =>
   gulp.src('node_modules/mapbox.js/theme/**/*')
     .pipe(gulp.dest(locs.dest.styles))
 
-const startServer = () =>
-  child.spawn('node', [locs.server], {stdio: 'inherit'})
-
 const watch = () => {
   // server
-  let server = startServer()
-  gulp.watch(locs.server, () => {
-    server.kill()
-    server.on('close', () => {
-      util.log('restarting express')
-      server = startServer()
-      browserSync.reload() // fires too early
-    })
-  })
+  nodemon(
+    { script: locs.server
+    , ignore:
+      [ 'src'
+      , 'server/public'
+      ]
+    }
+  )
+  nodemon.on('restart', () => browserSync.notify('express server restarted'))
 
   // scripts
   gulp.watch(locs.src.scripts.modules, ['imports'])
@@ -96,7 +94,6 @@ const watch = () => {
   gulp.watch(locs.src.html, ['html'])
 
   // browser-sync
-  // browserSync.watch(locs.dest.all).on('change', browserSync.reload)
   browserSync.init(
     { proxy:
       { target: 'localhost:3000'
@@ -124,10 +121,8 @@ gulp.task('imports', () => autoImport(locs.src.scripts.root))
 gulp.task('html', html)
 gulp.task('watch', ['styles', 'html'], cb => watch())
 gulp.task('clean', clean)
-gulp.task('node', startServer)
 gulp.task('build', cb =>
   runseq(
     ['styles', 'scripts', 'html']
     , cb
   ))
-gulp.task('serve', startServer)

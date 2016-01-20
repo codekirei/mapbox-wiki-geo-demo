@@ -40,15 +40,15 @@ const getLatestId = () => wiki(
   })
   .then(res => JSON.parse(res.body).query.categorymembers[0].pageid)
 
-getLatestId()
-  .then(getPageInfo)
-  // .then(console.log)
-  .catch(err => console.log(err))
+// getLatestId()
+//   .then(getPageInfo)
+//   // .then(console.log)
+//   .catch(err => console.log(err))
 
 // express
 //----------------------------------------------------------
 const app = express()
 app.use('/', express.static(p.join(__dirname, 'public')))
-app.listen(3000, () => {
+app.listen(3000, () =>
   console.log('express listening on localhost:3000')
-})
+)

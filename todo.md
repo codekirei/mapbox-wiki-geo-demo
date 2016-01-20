@@ -1,6 +1,3 @@
-- fix bug with server crashing gulp watch on err
-- fix bug with browser-sync running too early on server update (use IPC channel?)
-
 - get mapbox working inside mithril
 - clean up and consolidate styles
 
