@@ -8,6 +8,7 @@
 
 - pause/resume receiving updates from server
 - clean up deps
+- move server port into a cfg file (access from client + server)
 - add small history of previous locations (last 3?)
 - set up node process to run on server and update all connected clients when there are changes
   - should only ping when there are clients connected

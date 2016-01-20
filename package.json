@@ -9,7 +9,7 @@
   "author": "Jacob Blakely (codekirei)",
   "license": "MIT",
   "dependencies": {
-    "auto-import": "^0.1.2",
+    "auto-import": "^0.1.3",
     "babelify": "^7.2.0",
     "bluebird": "^3.1.1",
     "browser-sync": "^2.11.1",
